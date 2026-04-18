@@ -47,15 +47,17 @@ export default function LoginPage() {
       .select()
       .single()
 
-    if (firmError) { setError(firmError.message); setLoading(false); return }
+    // If firm/profile creation fails (e.g. email not confirmed yet), send to onboard
+    if (firmError) { router.push('/onboard'); return }
 
-    // Create profile
-    await supabase.from('profiles').insert({
+    const { error: profileError } = await supabase.from('profiles').upsert({
       id: data.user.id,
       full_name: fullName,
       firm_id: firm.id,
       role: 'admin',
     })
+
+    if (profileError) { router.push('/onboard'); return }
 
     router.push('/dashboard')
   }
