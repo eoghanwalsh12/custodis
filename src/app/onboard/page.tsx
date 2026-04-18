@@ -39,22 +39,14 @@ export default function OnboardPage() {
     setLoading(true)
     setError('')
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.replace('/login'); return }
+    const res = await fetch('/api/setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ firmName, fullName }),
+    })
 
-    const { data: firm, error: firmError } = await supabase
-      .from('firms')
-      .insert({ name: firmName })
-      .select()
-      .single()
-
-    if (firmError) { setError(firmError.message); setLoading(false); return }
-
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({ id: user.id, full_name: fullName, firm_id: firm.id, role: 'admin' })
-
-    if (profileError) { setError(profileError.message); setLoading(false); return }
+    const json = await res.json()
+    if (!res.ok) { setError(json.error ?? 'Setup failed'); setLoading(false); return }
 
     router.replace('/dashboard')
   }
